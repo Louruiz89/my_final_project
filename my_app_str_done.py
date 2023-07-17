@@ -1,8 +1,5 @@
-5#!/usr/bin/env python
+#!/usr/bin/env python
 # coding: utf-8
-
-# In[1]:
-
 
 #Los 3 primeros imports son para llamar a la API de ChatGPT
 from dotenv import load_dotenv
@@ -16,89 +13,62 @@ import pandas as pd #Este import es para cargar el CSV de latitud y longitud de 
 from haversine import haversine, Unit #Estos import son para calcular las distancias de lat y long
 from math import radians, sin, cos, sqrt, atan2
 
+import streamlit as st #Es para poder crear la APP
+from PIL import Image #cargar el logo
 
-# In[2]:
+image = Image.open('./data/camp_n_rolla.jpg')
 
+st.image(image, width=250)
+
+st.title("Camp :red[N] Rolla")
+st.header("Hey Roller friend!")
+st.subheader("_Are you ready for a last minute roadtrip in your campervan or RV?_")
 
 #Llamo a la API de chatGPT aunque ahora he decidido no empezar usandola
 
 load_dotenv()
 my_secret_key = os.getenv("my_openai_key")
 
-
-# In[3]:
-
-
 #Llamo a la contraseña que tengo guardada en .env
 
 openai.api_key = my_secret_key
 
-
-# In[4]:
-
-
 #Le doy la bienvenida al usuario
-
-print("Welcome to the APP that helps you to plan your road trip in Campervan starting from Madrid")
-
-
-# In[5]:
-
-
+#print("Welcome to the APP that helps you to plan your last minute road trip in Campervan starting from Madrid")
 #Le pregunto al usuario cuantos días va a viajar ya que es la base de mi elección de itinerario
+#days = int(input("Please enter how many days are you going to travel: "))
 
-days = int(input("Please enter how many days are you going to travel: "))
-
-
-# In[6]:
-
-
-#Calculo cuantos KM va a viajar en base a los días (resto 1 porque el último día no lo tengo en cuenta)
-
-number = (days - 1)*100
-number
-
-
-# In[7]:
-
+days = st.number_input('How long are you going for a RoadTrip? Select days:', min_value=2, max_value=20, step=1)
 
 #Creo un diccionario en base al radio de KM para usarlo como referencia para saber el tiempo
 
 dictionary = {
     'N': ['Riaza', 'Aranda de Duero', 'Burgos', 'Santander', 'Santander'],
-    'NO': ['Segovia', 'Zamora', 'Ponferrada', 'Lugo', 'A Coruña'],
-    'O': ['Ávila', 'Salamanca', 'Ciudad Rodrigo', 'Ciudad Rodrigo', 'Ciudad Rodrigo'],
-    'SO': ['Talavera de la Reina', 'Plasencia', 'Mérida', 'Sevilla', 'Huelva'],
-    'S': ['Toledo', 'Ciudad Real', 'Jaén', 'Granada', 'Málaga'],
+    'NO': ['Segovia', 'Villaralbo', 'Ponferrada', 'Lugo', 'Perillo'],
+    'O': ['Ávila', 'Salamanca', 'Ciudad Rodrigo', 'Aveiro', 'Lisboa'],
+    'SO': ['Talavera de la Reina', 'Plasencia', 'Calamonte', 'Sevilla', 'Huelva'],
+    'S': ['Mocejon', 'Ciudad Real', 'Jaén', 'Granada', 'Málaga'],
     'SE': ['Saelices', 'Albacete', 'Almansa', 'Murcia', 'Almería'],
-    'E': ['Sacedón', 'Cuenca', 'Valencia', 'Jávea', 'Alicante'],
+    'E': ['Sacedón', 'Nohales', 'Paterna', 'Jávea', 'Santa Pola'],
     'NE': ['Sigüenza', 'Calatayud', 'Zaragoza', 'Huesca', 'Andorra']}
 
+#Creo una función para que me calcule la posición en el diccionario en base a los días que va a viajar el usuario
+# Pero si introduce más de 5 días le devuelvo la última posición del diccionario independientemente de los días
 
-# In[8]:
-
-
-days
-
-
-# In[9]:
-
-
-#Necesito restar los días -2 para que me de la posición correcta del diccionario ya que por ejemplo 
-# en 3 días de viaje quiero hacer como máximo 200 kms, es decir la 2 posición que en python es 1
-''''''
-if days >=8:
-    d = 5
-elif days == 7 or days >= 2: 
-    d = int(days - 2)
-else:
+def days_limited(days: int):
+    
     d = 0
     
-d
+    if days >=8:
+        d = 4
+    elif days == 7 or days >= 2: 
+        d = int(days - 2)
+    else:
+        d = 0
+        
+    return d
 
-
-# In[10]:
-
+days_lim = days_limited(days)
 
 #Creo una función para que me genere automaticamente las ubicaciones en base a los días de viaje
 
@@ -109,18 +79,9 @@ def get_places(dictionary, d):
             values[key] = value_list[d]
     return values
 
-
-# In[11]:
-
-
 #Reviso que me devuelva el resultado correcto https://www.weatherapi.com/docs/
 
-result = get_places(dictionary, d)
-result
-
-
-# In[12]:
-
+result = get_places(dictionary, days_lim)
 
 #Creo todas las variables para llamar a la API del tiempo menos "q" que representa el lugar 
 #de dónde quiero ver la previsión del tiempo
@@ -132,11 +93,8 @@ key =os.getenv("my_weather_token")
 wdays = '&days=1'
 final = '&aqi=no&alerts=no'
 
+
 #print(url + forecast + pre + key + wdays + final)
-
-
-# In[13]:
-
 
 #Ahora creo una variable "q" para cada punto cardinal
 
@@ -150,10 +108,6 @@ sureste = q_var + result['SE']
 este = q_var + result['E']
 noreste = q_var + result['NE']
 
-
-# In[14]:
-
-
 #Creo una llamada a la API para cada lugar
 
 check_rain_north = requests.get(url + forecast + pre + key + norte + wdays + final)
@@ -165,11 +119,7 @@ check_rain_southeast = requests.get(url + forecast + pre + key + sureste + wdays
 check_rain_east = requests.get(url + forecast + pre + key + este + wdays + final)
 check_rain_northeast = requests.get(url + forecast + pre + key + noreste + wdays + final)
 
-#check_rain_southeast.status_code
-
-
-# In[15]:
-
+#Reviso si llueve en cada dirección
 
 check_rain_north_result = check_rain_north.json()
 check_rain_nortwest_result = check_rain_nortwest.json()
@@ -180,155 +130,103 @@ check_rain_southeast_result = check_rain_southeast.json()
 check_rain_east_result = check_rain_east.json()
 check_rain_northeast_result = check_rain_northeast.json()
 
+print('HOLA')
+print(url + forecast + pre + key + norte + wdays + final)
+print(url + forecast + pre + key + noroeste + wdays + final)
+print(url + forecast + pre + key + oeste + wdays + final)
+print(url + forecast + pre + key + suroeste + wdays + final)
+print(url + forecast + pre + key + sur + wdays + final)
+print(url + forecast + pre + key + sureste + wdays + final)
+print(url + forecast + pre + key + este + wdays + final)
+print(url + forecast + pre + key + noreste + wdays + final)
 
-# In[16]:
+#st.write('Awesome! I suggest to travel to the following directions as the others could rain tomorrow. Please select one: ', direction)
 
+def not_raining_places():
 
-print("Awesome! I suggest to travel to the following directions as the others could rain tomorrow")
+    placestogo = []
 
-#North
-if check_rain_north_result['forecast']["forecastday"][0]['day']['daily_chance_of_rain'] == 0:
-    print('North')
-    
-#Northwest
-if check_rain_nortwest_result['forecast']["forecastday"][0]['day']['daily_chance_of_rain'] == 0:
-    print('Northwest')
+    if check_rain_north_result['forecast']["forecastday"][0]['day']['daily_chance_of_rain'] == 0:
+        placestogo.append('North')
+    if check_rain_nortwest_result['forecast']["forecastday"][0]['day']['daily_chance_of_rain'] == 0:
+        placestogo.append('Northwest')
+    if check_rain_west_result['forecast']["forecastday"][0]['day']['daily_chance_of_rain'] == 0: 
+        placestogo.append('West')  
+    if check_rain_southwest_result['forecast']["forecastday"][0]['day']['daily_chance_of_rain'] == 0: 
+        placestogo.append('Southwest')
+    if check_rain_south_result['forecast']["forecastday"][0]['day']['daily_chance_of_rain'] == 0:
+        placestogo.append('South')
+    if check_rain_southeast_result['forecast']["forecastday"][0]['day']['daily_chance_of_rain'] == 0:
+        placestogo.append('Southeast')
+    if check_rain_east_result['forecast']["forecastday"][0]['day']['daily_chance_of_rain'] == 0:  
+        placestogo.append('East')
+    if check_rain_northeast_result['forecast']["forecastday"][0]['day']['daily_chance_of_rain'] == 0:
+        placestogo.append('NorthEast')
+    return placestogo
 
-#West
-if check_rain_west_result['forecast']["forecastday"][0]['day']['daily_chance_of_rain'] == 0:
-    print('West')
-    
-#Southwest
-if check_rain_southwest_result['forecast']["forecastday"][0]['day']['daily_chance_of_rain'] == 0:
-    print('Southwest')
-    
-#South
-if check_rain_south_result['forecast']["forecastday"][0]['day']['daily_chance_of_rain'] == 0:
-    print('South')
-
-#Southeast
-if check_rain_southeast_result['forecast']["forecastday"][0]['day']['daily_chance_of_rain'] == 0:
-    print('Southeast')
-
-#East
-if check_rain_east_result['forecast']["forecastday"][0]['day']['daily_chance_of_rain'] == 0:
-    print('East')
-    
-#Northeast
-if check_rain_northeast_result['forecast']["forecastday"][0]['day']['daily_chance_of_rain'] == 0:
-    print('Northeast')
-
-
-# In[17]:
-
+#direction = st.selectbox(
+#    'Awesome! I suggest to travel to the following directions as the others could rain tomorrow. Please select one: ',
+#    ('North', 'NorthEast', 'NorthWest', 'East', 'West', 'South', 'SouthEast', 'SouthWest'))
+placestogo_list = not_raining_places()
+direction = st.selectbox(
+    'Awesome! Pick up one of the following directions or if not, get ready to get wet as it could rain bro! Choose one and see cool recomendations: ',
+                    placestogo_list
+)
 
 #Ahora le pido al usuario que elija el punto cardinal
-
-direction = input('Choose one: ')
-
-
-# In[18]:
-
+#direction = input('Choose one: ')
+#direction_elegida = st.text_input('Choose one: ')
 
 #Cargo el dataset de municipios para tener las coordenadas
 
 municipios = pd.read_csv('./data/pueblos_bonitos_punto.csv')
-municipios[:8]
-
-
-# In[19]:
-
+#municipios[:8]
 
 #Cargo el dataset de las coordenadas de mis puntos cardinales para calcular las distancias
 
 p_cardinales = pd.read_csv('./data/puntos_cardinales_punto.csv')
-p_cardinales
-
-
-# In[20]:
-
+#p_cardinales
 
 #Ahora hago match entre la dirección que ha elegido el usuario y las opciones que tengo
 
-def user_direction(direction, result):
-    if direction == 'north' or direction == 'N' or direction == 'North':
+def user_direction(direction_elegida, result):
+    if direction_elegida == 'north' or direction_elegida == 'N' or direction_elegida == 'North':
         return result['N']
-    elif direction == 'northwest' or direction == 'NW' or direction == 'Northwest' or direction == 'NorthWest':
+    elif direction_elegida == 'northwest' or direction_elegida == 'NW' or direction_elegida == 'Northwest' or direction_elegida == 'NorthWest':
         return result['NO']
-    elif direction == 'west' or direction == 'West' or direction == 'W':
+    elif direction_elegida == 'west' or direction_elegida == 'West' or direction_elegida == 'W':
         return result['O']
-    elif direction == 'southwest' or direction == 'Southwest' or direction == 'SouthWest' or direction == 'SW':
+    elif direction_elegida == 'southwest' or direction_elegida == 'Southwest' or direction_elegida == 'SouthWest' or direction_elegida == 'SW':
         return result['SO']
-    elif direction == 'south' or direction == direction == 'S' or direction == 'South':
+    elif direction_elegida == 'south' or  direction_elegida == 'S' or direction_elegida == 'South':
         return result['S']
-    elif direction == 'southeast' or direction == 'Southeast' or direction == 'SouthEast' or direction == 'SE':
+    elif direction_elegida == 'southeast' or direction_elegida == 'Southeast' or direction_elegida == 'SouthEast' or direction_elegida == 'SE':
         return result['SE']
-    elif direction == 'east' or direction == 'East' or direction == 'E':
+    elif direction_elegida == 'east' or direction_elegida == 'East' or direction_elegida == 'E':
         return result['E']
-    elif direction == 'northeast' or direction == 'Northeast' or direction == 'NorthEast' or direction == 'NE':
+    elif direction_elegida == 'northeast' or direction_elegida == 'Northeast' or direction_elegida == 'NorthEast' or direction_elegida == 'NE':
         return result['NE']
     else:
-        return 'I am not able to find the direction'
-
-
-# In[21]:
-
+        return st.write('I am not able to find the direction')
 
 #Guardo el resultado en un diccionario
 
 result = {'N': result['N'], 'NO': result['NO'], 'O': result['O'], 'NE': result['NE'],
           'S': result['S'], 'SO': result['SO'], 'SE': result['SE'], 'E': result['E']}
 
-
-# In[22]:
-
-
 output = user_direction(direction, result)
-output
-
-
-# In[ ]:
-
+#output
 
 #Guardo en las variables de latitud y longitud desde dónde quiero crear el radio de los pueblos que recomendar
 
 row = p_cardinales[p_cardinales['Pueblo'] == output]
-row
-
-
-# In[ ]:
-
+#row
 
 idx = row.index[row['Pueblo'] == output][0]
-
-
-# In[ ]:
-
-
-idx
-
-
-# In[ ]:
-
+#idx
 
 lat_origen = row['Latitud'][idx]
 long_origen = row['Longitud'][idx]
-
-
-# In[ ]:
-
-
-lat_origen
-
-
-# In[ ]:
-
-
-long_origen
-
-
-# In[ ]:
-
 
 def haversine(lat1, lon1, lat2, lon2):
     R = 6371  # Radius of the Earth in kilometers
@@ -349,86 +247,27 @@ def haversine(lat1, lon1, lat2, lon2):
     return distance
 
 
-# In[ ]:
-
-
-type(row)
-
-
-# In[ ]:
-
-
-row.head()
-
-
-# In[ ]:
-
-
-row.info()
-
-
-# In[ ]:
-
-
-long_origen
-
-
-# In[ ]:
-
-
 municipios["Distance"] = municipios.apply(lambda row: haversine(row["Latitud"], row["Longitud"], lat_origen, long_origen), axis=1)
-
-
-# In[ ]:
-
-
-municipios
-
-
-# In[ ]:
-
+#municipios
 
 top_3 = municipios.sort_values(by='Distance').reset_index(drop=True)[:3]
-top_3
-
-
-# In[ ]:
-
+#top_3
 
 one = top_3.iloc[0, top_3.columns.get_loc('Pueblo')]
 two = top_3.iloc[1, top_3.columns.get_loc('Pueblo')]
 three = top_3.iloc[2, top_3.columns.get_loc('Pueblo')]
 
+st.write('Nice! I totally recommend you to visit these 3 villages selected as Pueblos Bonitos de España: ')
+st.write(f'{one}')
+st.write(f'{two}')
+st.write(f'{three}')
+#print('Cool! I recommend you to visit these 3 villages selected as Pueblos Bonitos de España: ') 
+#print(one)
+#print(two)
+#print(three)
 
-# In[ ]:
-
-
-print('Cool! I recommend you to visit these 3 villages selected as Pueblos Bonitos de España: ') 
-print(one)
-print(two)
-print(three)
-
-
-# In[ ]:
-
-
-print('Now, let me give you some ideas of monuments that you should visit: ') 
-
-
-# In[ ]:
-
-
-#prompt = f"Let me know the top places to visit in {one}."
-
-
-# In[ ]:
-
-
-#model_id="gpt-3.5-turbo"
-
-
-# In[ ]:
-
+#print('Now, let me give you some tips. Find below what to visit, where you can park to sleep and popular routes for trekking')
+st.write('Now, let me give you some tips. Find below what to visit, where you can park to sleep and popular routes for trekking')
 
 def generate_monuments_prompt(place):
     chat_prompt = [
@@ -448,56 +287,36 @@ def generate_monuments_prompt(place):
     return response.choices[0].message.content.strip()
 
 
-# In[ ]:
-
-
 place = one 
 
-
-# In[ ]:
-
-
 response_text = generate_monuments_prompt(place)
-print(one)
-print(response_text)
+#print(one)
+#print(response_text)
 
-
-# In[ ]:
-
+st.write(f'{one}')
+st.write(f'{response_text}')
 
 place = two
 
-
-# In[ ]:
-
-
 response_text = generate_monuments_prompt(place)
-print(two)
-print(response_text)
+#print(two)
+#print(response_text)
 
-
-# In[ ]:
-
+st.write(f'{two}')
+st.write(f'{response_text}')
 
 place = three
 
-
-# In[ ]:
-
-
 response_text = generate_monuments_prompt(place)
-print(three)
-print(response_text)
+#print(three)
+#print(response_text)
 
+st.write(f'{three}')
+st.write(f'{response_text}')
 
-# In[ ]:
+#print('Enjoy your trip!') 
+st.write('Go for it and enjoy your trip!')
 
+enjoy_image = Image.open('./data/enjoy.jpg')
 
-print('Do you want a restaurant recommendation?') 
-
-
-# In[ ]:
-
-
-
-
+st.image(enjoy_image)

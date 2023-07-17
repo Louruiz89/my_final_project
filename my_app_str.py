@@ -1,23 +1,24 @@
-5#!/usr/bin/env python
+#!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-
-
-#Los 3 primeros imports son para llamar a la API de ChatGPT
+#API de ChatGPT
 from dotenv import load_dotenv
 import os #provides ways to access the Operating System and allows us to read the environment variables
 import openai
 
-import requests #Este import es para llamar a la API del tiempo
+import requests # API weather
 
-import pandas as pd #Este import es para cargar el CSV de latitud y longitud de todos los pueblos de españa
+import pandas as pd
 
-from haversine import haversine, Unit #Estos import son para calcular las distancias de lat y long
+from haversine import haversine, Unit #Import lat and long
 from math import radians, sin, cos, sqrt, atan2
 
+import streamlit as st #Create the APP
 
-# In[2]:
+
+st.title("CampToGo")
+st.header("Welcome user")
+st.subheader("This is the APP that helps you to plan your last minute road trip in Campervan starting from Madrid")
 
 
 #Llamo a la API de chatGPT aunque ahora he decidido no empezar usandola
@@ -25,42 +26,17 @@ from math import radians, sin, cos, sqrt, atan2
 load_dotenv()
 my_secret_key = os.getenv("my_openai_key")
 
-
-# In[3]:
-
-
 #Llamo a la contraseña que tengo guardada en .env
 
 openai.api_key = my_secret_key
 
-
-# In[4]:
-
-
 #Le doy la bienvenida al usuario
 
-print("Welcome to the APP that helps you to plan your road trip in Campervan starting from Madrid")
-
-
-# In[5]:
-
+print("Welcome to the APP that helps you to plan your last minute road trip in Campervan starting from Madrid")
 
 #Le pregunto al usuario cuantos días va a viajar ya que es la base de mi elección de itinerario
 
 days = int(input("Please enter how many days are you going to travel: "))
-
-
-# In[6]:
-
-
-#Calculo cuantos KM va a viajar en base a los días (resto 1 porque el último día no lo tengo en cuenta)
-
-number = (days - 1)*100
-number
-
-
-# In[7]:
-
 
 #Creo un diccionario en base al radio de KM para usarlo como referencia para saber el tiempo
 
@@ -75,15 +51,6 @@ dictionary = {
     'NE': ['Sigüenza', 'Calatayud', 'Zaragoza', 'Huesca', 'Andorra']}
 
 
-# In[8]:
-
-
-days
-
-
-# In[9]:
-
-
 #Necesito restar los días -2 para que me de la posición correcta del diccionario ya que por ejemplo 
 # en 3 días de viaje quiero hacer como máximo 200 kms, es decir la 2 posición que en python es 1
 ''''''
@@ -95,9 +62,6 @@ else:
     d = 0
     
 d
-
-
-# In[10]:
 
 
 #Creo una función para que me genere automaticamente las ubicaciones en base a los días de viaje
@@ -116,7 +80,7 @@ def get_places(dictionary, d):
 #Reviso que me devuelva el resultado correcto https://www.weatherapi.com/docs/
 
 result = get_places(dictionary, d)
-result
+print(result)
 
 
 # In[12]:
@@ -280,14 +244,12 @@ result = {'N': result['N'], 'NO': result['NO'], 'O': result['O'], 'NE': result['
           'S': result['S'], 'SO': result['SO'], 'SE': result['SE'], 'E': result['E']}
 
 
-# In[22]:
 
 
 output = user_direction(direction, result)
 output
 
 
-# In[ ]:
 
 
 #Guardo en las variables de latitud y longitud desde dónde quiero crear el radio de los pueblos que recomendar
@@ -296,38 +258,19 @@ row = p_cardinales[p_cardinales['Pueblo'] == output]
 row
 
 
-# In[ ]:
+# In[25]:
 
 
 idx = row.index[row['Pueblo'] == output][0]
-
-
-# In[ ]:
-
-
 idx
 
 
-# In[ ]:
 
 
 lat_origen = row['Latitud'][idx]
 long_origen = row['Longitud'][idx]
 
 
-# In[ ]:
-
-
-lat_origen
-
-
-# In[ ]:
-
-
-long_origen
-
-
-# In[ ]:
 
 
 def haversine(lat1, lon1, lat2, lon2):
@@ -349,50 +292,21 @@ def haversine(lat1, lon1, lat2, lon2):
     return distance
 
 
-# In[ ]:
-
-
-type(row)
-
-
-# In[ ]:
-
-
-row.head()
-
-
-# In[ ]:
-
-
-row.info()
-
-
-# In[ ]:
-
-
-long_origen
-
-
-# In[ ]:
+# In[33]:
 
 
 municipios["Distance"] = municipios.apply(lambda row: haversine(row["Latitud"], row["Longitud"], lat_origen, long_origen), axis=1)
-
-
-# In[ ]:
-
-
 municipios
 
 
-# In[ ]:
+# In[34]:
 
 
 top_3 = municipios.sort_values(by='Distance').reset_index(drop=True)[:3]
 top_3
 
 
-# In[ ]:
+# In[35]:
 
 
 one = top_3.iloc[0, top_3.columns.get_loc('Pueblo')]
@@ -400,7 +314,7 @@ two = top_3.iloc[1, top_3.columns.get_loc('Pueblo')]
 three = top_3.iloc[2, top_3.columns.get_loc('Pueblo')]
 
 
-# In[ ]:
+# In[36]:
 
 
 print('Cool! I recommend you to visit these 3 villages selected as Pueblos Bonitos de España: ') 
@@ -409,25 +323,13 @@ print(two)
 print(three)
 
 
-# In[ ]:
+# In[37]:
 
 
-print('Now, let me give you some ideas of monuments that you should visit: ') 
+print('Now, let me give you some tips. Find below what to visit, where you can park to sleep and popular routes for trekking')
 
 
-# In[ ]:
-
-
-#prompt = f"Let me know the top places to visit in {one}."
-
-
-# In[ ]:
-
-
-#model_id="gpt-3.5-turbo"
-
-
-# In[ ]:
+# In[38]:
 
 
 def generate_monuments_prompt(place):
@@ -448,13 +350,13 @@ def generate_monuments_prompt(place):
     return response.choices[0].message.content.strip()
 
 
-# In[ ]:
+# In[39]:
 
 
 place = one 
 
 
-# In[ ]:
+# In[40]:
 
 
 response_text = generate_monuments_prompt(place)
@@ -462,13 +364,13 @@ print(one)
 print(response_text)
 
 
-# In[ ]:
+# In[41]:
 
 
 place = two
 
 
-# In[ ]:
+# In[42]:
 
 
 response_text = generate_monuments_prompt(place)
@@ -476,13 +378,13 @@ print(two)
 print(response_text)
 
 
-# In[ ]:
+# In[43]:
 
 
 place = three
 
 
-# In[ ]:
+# In[44]:
 
 
 response_text = generate_monuments_prompt(place)
@@ -490,10 +392,10 @@ print(three)
 print(response_text)
 
 
-# In[ ]:
+# In[45]:
 
 
-print('Do you want a restaurant recommendation?') 
+print('Enjoy your trip!') 
 
 
 # In[ ]:

@@ -1,7 +1,5 @@
-5#!/usr/bin/env python
+#!/usr/bin/env python
 # coding: utf-8
-
-# In[1]:
 
 
 #Los 3 primeros imports son para llamar a la API de ChatGPT
@@ -16,8 +14,13 @@ import pandas as pd #Este import es para cargar el CSV de latitud y longitud de 
 from haversine import haversine, Unit #Estos import son para calcular las distancias de lat y long
 from math import radians, sin, cos, sqrt, atan2
 
+import streamlit as st #Es para poder crear la APP
 
-# In[2]:
+
+
+st.title("CampToGo")
+st.header("Welcome user")
+st.subheader("This is the APP that helps you to plan your last minute road trip in Campervan starting from Madrid")
 
 
 #Llamo a la API de chatGPT aunque ahora he decidido no empezar usandola
@@ -26,41 +29,17 @@ load_dotenv()
 my_secret_key = os.getenv("my_openai_key")
 
 
-# In[3]:
-
-
 #Llamo a la contraseña que tengo guardada en .env
 
 openai.api_key = my_secret_key
 
-
-# In[4]:
-
-
 #Le doy la bienvenida al usuario
 
-print("Welcome to the APP that helps you to plan your road trip in Campervan starting from Madrid")
-
-
-# In[5]:
-
+print("Welcome to the APP that helps you to plan your last minute road trip in Campervan starting from Madrid")
 
 #Le pregunto al usuario cuantos días va a viajar ya que es la base de mi elección de itinerario
 
 days = int(input("Please enter how many days are you going to travel: "))
-
-
-# In[6]:
-
-
-#Calculo cuantos KM va a viajar en base a los días (resto 1 porque el último día no lo tengo en cuenta)
-
-number = (days - 1)*100
-number
-
-
-# In[7]:
-
 
 #Creo un diccionario en base al radio de KM para usarlo como referencia para saber el tiempo
 
@@ -75,30 +54,24 @@ dictionary = {
     'NE': ['Sigüenza', 'Calatayud', 'Zaragoza', 'Huesca', 'Andorra']}
 
 
-# In[8]:
+#Creo una función para que me calcule la posición en el diccionario en base a los días que va a viajar el usuario
+# Pero si introduce más de 5 días le devuelvo la última posición del diccionario independientemente de los días
 
-
-days
-
-
-# In[9]:
-
-
-#Necesito restar los días -2 para que me de la posición correcta del diccionario ya que por ejemplo 
-# en 3 días de viaje quiero hacer como máximo 200 kms, es decir la 2 posición que en python es 1
-''''''
-if days >=8:
-    d = 5
-elif days == 7 or days >= 2: 
-    d = int(days - 2)
-else:
+def days_limited(days: int):
+    
     d = 0
     
-d
+    if days >=8:
+        d = 4
+    elif days == 7 or days >= 2: 
+        d = int(days - 2)
+    else:
+        d = 0
+        
+    return d
 
 
-# In[10]:
-
+days_lim = days_limited(days)
 
 #Creo una función para que me genere automaticamente las ubicaciones en base a los días de viaje
 
@@ -109,18 +82,9 @@ def get_places(dictionary, d):
             values[key] = value_list[d]
     return values
 
-
-# In[11]:
-
-
 #Reviso que me devuelva el resultado correcto https://www.weatherapi.com/docs/
 
-result = get_places(dictionary, d)
-result
-
-
-# In[12]:
-
+result = get_places(dictionary, days_lim)
 
 #Creo todas las variables para llamar a la API del tiempo menos "q" que representa el lugar 
 #de dónde quiero ver la previsión del tiempo
@@ -131,11 +95,6 @@ pre = 'key='
 key =os.getenv("my_weather_token")
 wdays = '&days=1'
 final = '&aqi=no&alerts=no'
-
-#print(url + forecast + pre + key + wdays + final)
-
-
-# In[13]:
 
 
 #Ahora creo una variable "q" para cada punto cardinal
@@ -150,10 +109,6 @@ sureste = q_var + result['SE']
 este = q_var + result['E']
 noreste = q_var + result['NE']
 
-
-# In[14]:
-
-
 #Creo una llamada a la API para cada lugar
 
 check_rain_north = requests.get(url + forecast + pre + key + norte + wdays + final)
@@ -165,11 +120,6 @@ check_rain_southeast = requests.get(url + forecast + pre + key + sureste + wdays
 check_rain_east = requests.get(url + forecast + pre + key + este + wdays + final)
 check_rain_northeast = requests.get(url + forecast + pre + key + noreste + wdays + final)
 
-#check_rain_southeast.status_code
-
-
-# In[15]:
-
 
 check_rain_north_result = check_rain_north.json()
 check_rain_nortwest_result = check_rain_nortwest.json()
@@ -179,9 +129,6 @@ check_rain_south_result = check_rain_south.json()
 check_rain_southeast_result = check_rain_southeast.json()
 check_rain_east_result = check_rain_east.json()
 check_rain_northeast_result = check_rain_northeast.json()
-
-
-# In[16]:
 
 
 print("Awesome! I suggest to travel to the following directions as the others could rain tomorrow")
@@ -219,34 +166,17 @@ if check_rain_northeast_result['forecast']["forecastday"][0]['day']['daily_chanc
     print('Northeast')
 
 
-# In[17]:
-
-
 #Ahora le pido al usuario que elija el punto cardinal
 
 direction = input('Choose one: ')
 
-
-# In[18]:
-
-
 #Cargo el dataset de municipios para tener las coordenadas
 
 municipios = pd.read_csv('./data/pueblos_bonitos_punto.csv')
-municipios[:8]
-
-
-# In[19]:
-
 
 #Cargo el dataset de las coordenadas de mis puntos cardinales para calcular las distancias
 
 p_cardinales = pd.read_csv('./data/puntos_cardinales_punto.csv')
-p_cardinales
-
-
-# In[20]:
-
 
 #Ahora hago match entre la dirección que ha elegido el usuario y las opciones que tengo
 
@@ -270,65 +200,21 @@ def user_direction(direction, result):
     else:
         return 'I am not able to find the direction'
 
-
-# In[21]:
-
-
 #Guardo el resultado en un diccionario
 
 result = {'N': result['N'], 'NO': result['NO'], 'O': result['O'], 'NE': result['NE'],
           'S': result['S'], 'SO': result['SO'], 'SE': result['SE'], 'E': result['E']}
 
-
-# In[22]:
-
-
 output = user_direction(direction, result)
-output
-
-
-# In[ ]:
-
 
 #Guardo en las variables de latitud y longitud desde dónde quiero crear el radio de los pueblos que recomendar
 
 row = p_cardinales[p_cardinales['Pueblo'] == output]
-row
-
-
-# In[ ]:
-
 
 idx = row.index[row['Pueblo'] == output][0]
 
-
-# In[ ]:
-
-
-idx
-
-
-# In[ ]:
-
-
 lat_origen = row['Latitud'][idx]
 long_origen = row['Longitud'][idx]
-
-
-# In[ ]:
-
-
-lat_origen
-
-
-# In[ ]:
-
-
-long_origen
-
-
-# In[ ]:
-
 
 def haversine(lat1, lon1, lat2, lon2):
     R = 6371  # Radius of the Earth in kilometers
@@ -349,59 +235,13 @@ def haversine(lat1, lon1, lat2, lon2):
     return distance
 
 
-# In[ ]:
-
-
-type(row)
-
-
-# In[ ]:
-
-
-row.head()
-
-
-# In[ ]:
-
-
-row.info()
-
-
-# In[ ]:
-
-
-long_origen
-
-
-# In[ ]:
-
-
 municipios["Distance"] = municipios.apply(lambda row: haversine(row["Latitud"], row["Longitud"], lat_origen, long_origen), axis=1)
 
-
-# In[ ]:
-
-
-municipios
-
-
-# In[ ]:
-
-
 top_3 = municipios.sort_values(by='Distance').reset_index(drop=True)[:3]
-top_3
-
-
-# In[ ]:
-
 
 one = top_3.iloc[0, top_3.columns.get_loc('Pueblo')]
 two = top_3.iloc[1, top_3.columns.get_loc('Pueblo')]
 three = top_3.iloc[2, top_3.columns.get_loc('Pueblo')]
-
-
-# In[ ]:
-
 
 print('Cool! I recommend you to visit these 3 villages selected as Pueblos Bonitos de España: ') 
 print(one)
@@ -409,26 +249,7 @@ print(two)
 print(three)
 
 
-# In[ ]:
-
-
-print('Now, let me give you some ideas of monuments that you should visit: ') 
-
-
-# In[ ]:
-
-
-#prompt = f"Let me know the top places to visit in {one}."
-
-
-# In[ ]:
-
-
-#model_id="gpt-3.5-turbo"
-
-
-# In[ ]:
-
+print('Now, let me give you some tips. Find below what to visit, where you can park to sleep and popular routes for trekking')
 
 def generate_monuments_prompt(place):
     chat_prompt = [
@@ -448,56 +269,24 @@ def generate_monuments_prompt(place):
     return response.choices[0].message.content.strip()
 
 
-# In[ ]:
-
-
 place = one 
-
-
-# In[ ]:
 
 
 response_text = generate_monuments_prompt(place)
 print(one)
 print(response_text)
 
-
-# In[ ]:
-
-
 place = two
-
-
-# In[ ]:
-
 
 response_text = generate_monuments_prompt(place)
 print(two)
 print(response_text)
 
-
-# In[ ]:
-
-
 place = three
-
-
-# In[ ]:
-
 
 response_text = generate_monuments_prompt(place)
 print(three)
 print(response_text)
 
 
-# In[ ]:
-
-
-print('Do you want a restaurant recommendation?') 
-
-
-# In[ ]:
-
-
-
-
+print('Enjoy your trip!') 

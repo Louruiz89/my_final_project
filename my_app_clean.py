@@ -1,4 +1,4 @@
-5#!/usr/bin/env python
+#!/usr/bin/env python
 # coding: utf-8
 
 # In[1]:
@@ -15,6 +15,15 @@ import pandas as pd #Este import es para cargar el CSV de latitud y longitud de 
 
 from haversine import haversine, Unit #Estos import son para calcular las distancias de lat y long
 from math import radians, sin, cos, sqrt, atan2
+
+
+import streamlit as st #Es para poder crear la APP
+
+
+# In[ ]:
+
+
+st.write("TEST My First Streamlit Web App")
 
 
 # In[2]:
@@ -34,15 +43,15 @@ my_secret_key = os.getenv("my_openai_key")
 openai.api_key = my_secret_key
 
 
-# In[4]:
+# In[5]:
 
 
 #Le doy la bienvenida al usuario
 
-print("Welcome to the APP that helps you to plan your road trip in Campervan starting from Madrid")
+print("Welcome to the APP that helps you to plan your last minute road trip in Campervan starting from Madrid")
 
 
-# In[5]:
+# In[6]:
 
 
 #Le pregunto al usuario cuantos días va a viajar ya que es la base de mi elección de itinerario
@@ -50,7 +59,7 @@ print("Welcome to the APP that helps you to plan your road trip in Campervan sta
 days = int(input("Please enter how many days are you going to travel: "))
 
 
-# In[6]:
+# In[7]:
 
 
 #Calculo cuantos KM va a viajar en base a los días (resto 1 porque el último día no lo tengo en cuenta)
@@ -59,7 +68,7 @@ number = (days - 1)*100
 number
 
 
-# In[7]:
+# In[8]:
 
 
 #Creo un diccionario en base al radio de KM para usarlo como referencia para saber el tiempo
@@ -73,12 +82,6 @@ dictionary = {
     'SE': ['Saelices', 'Albacete', 'Almansa', 'Murcia', 'Almería'],
     'E': ['Sacedón', 'Cuenca', 'Valencia', 'Jávea', 'Alicante'],
     'NE': ['Sigüenza', 'Calatayud', 'Zaragoza', 'Huesca', 'Andorra']}
-
-
-# In[8]:
-
-
-days
 
 
 # In[9]:
@@ -287,7 +290,7 @@ output = user_direction(direction, result)
 output
 
 
-# In[ ]:
+# In[23]:
 
 
 #Guardo en las variables de latitud y longitud desde dónde quiero crear el radio de los pueblos que recomendar
@@ -296,38 +299,21 @@ row = p_cardinales[p_cardinales['Pueblo'] == output]
 row
 
 
-# In[ ]:
+# In[25]:
 
 
 idx = row.index[row['Pueblo'] == output][0]
-
-
-# In[ ]:
-
-
 idx
 
 
-# In[ ]:
+# In[26]:
 
 
 lat_origen = row['Latitud'][idx]
 long_origen = row['Longitud'][idx]
 
 
-# In[ ]:
-
-
-lat_origen
-
-
-# In[ ]:
-
-
-long_origen
-
-
-# In[ ]:
+# In[29]:
 
 
 def haversine(lat1, lon1, lat2, lon2):
@@ -349,50 +335,21 @@ def haversine(lat1, lon1, lat2, lon2):
     return distance
 
 
-# In[ ]:
-
-
-type(row)
-
-
-# In[ ]:
-
-
-row.head()
-
-
-# In[ ]:
-
-
-row.info()
-
-
-# In[ ]:
-
-
-long_origen
-
-
-# In[ ]:
+# In[33]:
 
 
 municipios["Distance"] = municipios.apply(lambda row: haversine(row["Latitud"], row["Longitud"], lat_origen, long_origen), axis=1)
-
-
-# In[ ]:
-
-
 municipios
 
 
-# In[ ]:
+# In[34]:
 
 
 top_3 = municipios.sort_values(by='Distance').reset_index(drop=True)[:3]
 top_3
 
 
-# In[ ]:
+# In[35]:
 
 
 one = top_3.iloc[0, top_3.columns.get_loc('Pueblo')]
@@ -400,7 +357,7 @@ two = top_3.iloc[1, top_3.columns.get_loc('Pueblo')]
 three = top_3.iloc[2, top_3.columns.get_loc('Pueblo')]
 
 
-# In[ ]:
+# In[36]:
 
 
 print('Cool! I recommend you to visit these 3 villages selected as Pueblos Bonitos de España: ') 
@@ -409,25 +366,13 @@ print(two)
 print(three)
 
 
-# In[ ]:
+# In[37]:
 
 
-print('Now, let me give you some ideas of monuments that you should visit: ') 
+print('Now, let me give you some tips. Find below what to visit, where you can park to sleep and popular routes for trekking')
 
 
-# In[ ]:
-
-
-#prompt = f"Let me know the top places to visit in {one}."
-
-
-# In[ ]:
-
-
-#model_id="gpt-3.5-turbo"
-
-
-# In[ ]:
+# In[38]:
 
 
 def generate_monuments_prompt(place):
@@ -448,13 +393,13 @@ def generate_monuments_prompt(place):
     return response.choices[0].message.content.strip()
 
 
-# In[ ]:
+# In[39]:
 
 
 place = one 
 
 
-# In[ ]:
+# In[40]:
 
 
 response_text = generate_monuments_prompt(place)
@@ -462,13 +407,13 @@ print(one)
 print(response_text)
 
 
-# In[ ]:
+# In[41]:
 
 
 place = two
 
 
-# In[ ]:
+# In[42]:
 
 
 response_text = generate_monuments_prompt(place)
@@ -476,13 +421,13 @@ print(two)
 print(response_text)
 
 
-# In[ ]:
+# In[43]:
 
 
 place = three
 
 
-# In[ ]:
+# In[44]:
 
 
 response_text = generate_monuments_prompt(place)
@@ -490,10 +435,10 @@ print(three)
 print(response_text)
 
 
-# In[ ]:
+# In[45]:
 
 
-print('Do you want a restaurant recommendation?') 
+print('Enjoy your trip!') 
 
 
 # In[ ]:
