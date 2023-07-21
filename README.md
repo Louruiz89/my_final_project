@@ -4,7 +4,7 @@
 
 ## **Introduction:**
 
-The APP "Camp & Rolla" borns from the idea to plan a trip in the very last minute. The best thing about having a campervan or a RV is that you can decide to travel at the last moment without having to organize anything in advance."
+The APP **"Camp & Rolla"** borns from the idea to plan a trip in the very last minute. The best thing about having a campervan or a RV is that you can decide to travel at the last moment without having to organize anything in advance."
 
 ## **What is the application about?:**
 
@@ -36,22 +36,32 @@ After your selection, the APP gives the top 3 places closer to the km you told. 
 - **import streamlit:** The library to create an application to make the code more visual
 - **import Image:** To show images in the APP
 
-## **Mockup:**
+## **Directory Structure**
+```
+├── .env
+├── .gitignore
+├── data
+│   ├── camp_n_rolla.jpg (logo)
+│   ├── enjoy.jpg (closure)
+│   ├── municipios.csv
+│   ├── municipios_list.csv
+│   ├── municipios_punto.csv
+│   ├── pueblos_bonitos.csv
+│   ├── pueblos_bonitos_punto.csv
+│   ├── puntos_cardinales.csv
+│   └── puntos_cardinales_punto.csv
+├── Datasets_conversion.ipynb
+├── README.md
+├── my_app_raincheck_and_destination.ipynb
+└── my_app_raincheck_and_destination.py
+```
 
-First Version:
+## **To Do:**
 
-![mockup1](https://github.com/Louruiz89/Project_2/assets/123680936/da092f94-d4f8-49ab-8da0-f103bb57669f)
+As next steps, I would like to:
+- 
 
-Second Version:
-
-![mockup2](https://github.com/Louruiz89/Project_2/assets/123680936/d7fae294-56b4-457e-bf97-efc5c7ce64d3)
-
-
-## **Data Model:**
-
-![_CO2 Compensated](https://github.com/Louruiz89/Project_2/assets/123680936/c602e844-f196-4b4b-b2d1-34e378e31dee)
-
-## **Dashboard Data:**
+## **To Do:**
 
 The Dashboard created for this project contains the following information: 
 
